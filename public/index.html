@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Cloud Resource Allocator - Optimize task allocation based on CPU, RAM, and Disk constraints">
+  <title>Cloud Resource Allocator</title>
+  
+  <!-- Inter Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  
+  <!-- Your CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="app-header">
+      <h1>☁️ Cloud Resource Allocator</h1>
+      <p>Efficiently assign cloud tasks based on available CPU, RAM, and Disk</p>
+    </header>
+    
+    <form id="resourceForm">
+      <div class="resource-inputs">
+        <div class="form-group">
+          <label for="taskCount">Number of Tasks</label>
+          <input type="number" id="taskCount" min="1" max="25" required />
+          <small class="helper-text">Enter between 1-25 tasks</small>
+        </div>
+        
+        <div class="resource-grid">
+          <div class="form-group">
+            <label for="cpu">CPU Units Available</label>
+            <input type="number" id="cpu" min="1" required />
+          </div>
+          <div class="form-group">
+            <label for="ram">RAM Available (GB)</label>
+            <input type="number" id="ram" min="1" required />
+          </div>
+          <div class="form-group">
+            <label for="disk">Disk Space Available (GB)</label>
+            <input type="number" id="disk" min="1" required />
+          </div>
+        </div>
+      </div>
+      
+      <div id="taskInputs" class="task-inputs-container"></div>
+      
+      <div class="form-actions">
+        <button type="submit" class="btn">
+          <span class="btn-icon">⚡</span> Allocate Resources
+        </button>
+      </div>
+    </form>
+    
+    <div id="output" class="output"></div>
+  </div>
+  
+  <footer class="app-footer">
+    <p>© 2025 Cloud Resource Allocator | DAA Project</p>
+  </footer>
+  
+  <!-- Template for task inputs -->
+  <template id="taskInputTemplate">
+    <div class="task-input">
+      <h3>Task</h3>
+      <div class="task-input-grid">
+        <div class="form-group">
+          <label>CPU Units</label>
+          <input type="number" name="cpu" min="1" required>
+        </div>
+        <div class="form-group">
+          <label>RAM (GB)</label>
+          <input type="number" name="ram" min="1" required>
+        </div>
+        <div class="form-group">
+          <label>Disk (GB)</label>
+          <input type="number" name="disk" min="1" required>
+        </div>
+        <div class="form-group">
+          <label>Value</label>
+          <input type="number" name="value" min="1" required>
+        </div>
+      </div>
+    </div>
+  </template>
+  
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

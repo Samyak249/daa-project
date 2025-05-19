@@ -1,0 +1,2 @@
+Maximum Total Value: 550
+Selected Tasks (0-based indices): 2 1 
