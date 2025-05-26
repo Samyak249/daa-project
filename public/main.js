@@ -64,6 +64,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 3000);
   }
 
+  function calculateRemainingCompute(selectedTaskIndices, tasks, totalCpu, totalRam, totalDisk) {
+    let usedCpu = 0, usedRam = 0, usedDisk = 0;
+    
+    selectedTaskIndices.forEach(index => {
+      if (tasks[index]) {
+        usedCpu += tasks[index].cpu;
+        usedRam += tasks[index].ram;
+        usedDisk += tasks[index].disk;
+      }
+    });
+
+    return {
+      remainingCpu: totalCpu - usedCpu,
+      remainingRam: totalRam - usedRam,
+      remainingDisk: totalDisk - usedDisk,
+      usedCpu,
+      usedRam,
+      usedDisk
+    };
+  }
+
   resourceForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     outputDiv.innerHTML = `
@@ -72,19 +93,22 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     const numTasks = parseInt(taskCountInput.value);
-    const cpu = cpuInput.value;
-    const ram = ramInput.value;
-    const disk = diskInput.value;
+    const cpu = parseInt(cpuInput.value);
+    const ram = parseInt(ramInput.value);
+    const disk = parseInt(diskInput.value);
 
     const taskDivs = document.querySelectorAll('.task-input');
     let tasksStr = '';
+    const tasks = [];
 
     try {
       for (const taskDiv of taskDivs) {
-        const cpuVal = taskDiv.querySelector('input[name^="cpu"]').value;
-        const ramVal = taskDiv.querySelector('input[name^="ram"]').value;
-        const diskVal = taskDiv.querySelector('input[name^="disk"]').value;
-        const valueVal = taskDiv.querySelector('input[name^="value"]').value;
+        const cpuVal = parseInt(taskDiv.querySelector('input[name^="cpu"]').value);
+        const ramVal = parseInt(taskDiv.querySelector('input[name^="ram"]').value);
+        const diskVal = parseInt(taskDiv.querySelector('input[name^="disk"]').value);
+        const valueVal = parseInt(taskDiv.querySelector('input[name^="value"]').value);
+        
+        tasks.push({ cpu: cpuVal, ram: ramVal, disk: diskVal, value: valueVal });
         tasksStr += `${cpuVal} ${ramVal} ${diskVal} ${valueVal}\n`;
       }
 
@@ -104,12 +128,44 @@ document.addEventListener('DOMContentLoaded', () => {
       const resultText = await response.text();
 
       const lines = resultText.trim().split('\n');
+      let maxValue = '';
+      let selectedTasksText = '';
+      let selectedTaskIndices = [];
+
       if (lines.length >= 2) {
-        const [maxLine, taskLine] = lines;
+        maxValue = lines[0];
+        selectedTasksText = lines[1];
+        
+        // Extract task indices from the result
+        const indicesMatch = selectedTasksText.match(/Selected Tasks \(0-based indices\): ([\d\s]+)/);
+        if (indicesMatch) {
+          selectedTaskIndices = indicesMatch[1].trim().split(/\s+/).map(Number).filter(n => !isNaN(n));
+        }
+      }
+
+      // Calculate remaining compute
+      const computeStats = calculateRemainingCompute(selectedTaskIndices, tasks, cpu, ram, disk);
+
+      // Store data for PDF generation
+      window.allocationData = {
+        maxValue,
+        selectedTasksText,
+        computeStats,
+        totalResources: { cpu, ram, disk },
+        tasks,
+        selectedTaskIndices
+      };
+
+      if (lines.length >= 2) {
         outputDiv.innerHTML = `
           <h2>🧠 Allocation Result</h2>
-          <p><strong>${maxLine}</strong></p>
-          <p>${taskLine.replace('Selected Tasks', '<strong>Selected Tasks</strong>')}</p>
+          <p><strong>${maxValue}</strong></p>
+          <p>${selectedTasksText.replace('Selected Tasks', '<strong>Selected Tasks</strong>')}</p>
+          <div style="margin-top: 15px; padding: 15px; background: rgba(255, 255, 255, 0.1); border-radius: 8px;">
+            <h3 style="color: #00d2d3; margin-bottom: 10px;">📊 Resource Usage</h3>
+            <p><strong>Used Resources:</strong> CPU: ${computeStats.usedCpu}, RAM: ${computeStats.usedRam}GB, Disk: ${computeStats.usedDisk}GB</p>
+            <p><strong>Remaining Resources:</strong> CPU: ${computeStats.remainingCpu}, RAM: ${computeStats.remainingRam}GB, Disk: ${computeStats.remainingDisk}GB</p>
+          </div>
           <div class="action-buttons">
             <button id="downloadBtn" class="btn btn-small">📄 Export as PDF</button>
             <button id="newAllocationBtn" class="btn btn-small">🔄 New Allocation</button>
@@ -162,6 +218,24 @@ document.addEventListener('DOMContentLoaded', () => {
         tempOutput.querySelectorAll('p').forEach(p => {
           content += p.innerText + '\n\n';
         });
+
+        // Add resource usage details if available
+        if (window.allocationData) {
+          const data = window.allocationData;
+          content += `Resource Usage Details:\n`;
+          content += `Used Resources: CPU: ${data.computeStats.usedCpu}, RAM: ${data.computeStats.usedRam}GB, Disk: ${data.computeStats.usedDisk}GB\n`;
+          content += `Remaining Resources: CPU: ${data.computeStats.remainingCpu}, RAM: ${data.computeStats.remainingRam}GB, Disk: ${data.computeStats.remainingDisk}GB\n\n`;
+          
+          if (data.selectedTaskIndices.length > 0) {
+            content += `Selected Task Details:\n`;
+            data.selectedTaskIndices.forEach((index, i) => {
+              const task = data.tasks[index];
+              if (task) {
+                content += `Task ${index + 1}: CPU: ${task.cpu}, RAM: ${task.ram}GB, Disk: ${task.disk}GB, Value: ${task.value}\n`;
+              }
+            });
+          }
+        }
 
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(16);

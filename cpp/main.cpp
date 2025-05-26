@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <algorithm>
 using namespace std;
 
 // Structure to represent each task
@@ -51,6 +52,9 @@ int knapsack3D(int maxCPU, int maxRAM, int maxDisk, vector<Task>& tasks, vector<
         }
     }
 
+    // Sort selected tasks for consistent output
+    sort(selectedTasks.begin(), selectedTasks.end());
+
     return dp[n][maxCPU][maxRAM][maxDisk]; // Final answer
 }
 
@@ -76,12 +80,26 @@ int main() {
     vector<int> selectedTasks;
     int maxValue = knapsack3D(maxCPU, maxRAM, maxDisk, tasks, selectedTasks);
 
+    // Calculate used resources
+    int usedCPU = 0, usedRAM = 0, usedDisk = 0;
+    for (int idx : selectedTasks) {
+        usedCPU += tasks[idx].cpu;
+        usedRAM += tasks[idx].ram;
+        usedDisk += tasks[idx].disk;
+    }
+
+    // Output results in a format that JavaScript can parse easily
     cout << "Maximum Total Value: " << maxValue << "\n";
     cout << "Selected Tasks (0-based indices): ";
-    for (int idx : selectedTasks) {
-        cout << idx << " ";
+    for (int i = 0; i < selectedTasks.size(); ++i) {
+        cout << selectedTasks[i];
+        if (i < selectedTasks.size() - 1) cout << " ";
     }
     cout << "\n";
+    
+    // Additional resource usage information
+    cout << "Used Resources: CPU=" << usedCPU << " RAM=" << usedRAM << " DISK=" << usedDisk << "\n";
+    cout << "Remaining Resources: CPU=" << (maxCPU - usedCPU) << " RAM=" << (maxRAM - usedRAM) << " DISK=" << (maxDisk - usedDisk) << "\n";
 
     return 0;
 }
